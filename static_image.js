@@ -21,33 +21,16 @@ import 'babel-polyfill';
 import { SVGUtils } from './utils/svgUtils';
 import { PoseIllustration } from './illustrationGen/illustration';
 import { Skeleton } from './illustrationGen/skeleton';
-import { toggleLoadingUI, setStatusText } from './utils/demoUtils';
 
-import * as boySVG from './resources/illustration/boy.svg';
-import * as girlSVG from './resources/illustration/girl.svg';
 import * as girlSH from './resources/illustration/girlSH.svg';
 
-import * as boy_doughnut from './resources/images/boy_doughnut.jpg';
-import * as tie_with_beer from './resources/images/tie_with_beer.jpg';
-import * as test_img from './resources/images/test.png';
-import * as full_body from './resources/images/full-body.png';
-import * as full_body_1 from './resources/images/full-body_1.png';
 import * as full_body_2 from './resources/images/full-body_2.png';
-
-import { FileUtils } from './utils/fileUtils';
 
 // clang-format on
 const avatarSvgs = {
-  girl: girlSVG.default,
-  boy: boySVG.default,
   women: girlSH.default,
 };
 const sourceImages = {
-  boy_doughnut: boy_doughnut.default,
-  tie_with_beer: tie_with_beer.default,
-  test_img: test_img.default,
-  full_body: full_body.default,
-  full_body_1: full_body_1.default,
   full_body_2: full_body_2.default,
 };
 
@@ -97,107 +80,95 @@ function drawDetectionResults() {
  * calculates poses based on the model outputs
  */
 async function testImageAndEstimatePoses() {
-  toggleLoadingUI(true);
-  setStatusText('Loading FaceMesh model...');
-  document.getElementById('results').style.display = 'none';
-
-  // Reload facemesh model to purge states from previous runs.
-  //facemesh = await facemesh_module.load();
-
-  // Load an example image
-  setStatusText('Loading image...');
-  sourceImage = await loadImage(sourceImages[guiState.sourceImage]);
-
-  // Estimates poses
-  setStatusText('Predicting...');
+  sourceImage = await loadImage(sourceImages['full_body_2']);
   predictedPoses = [
     {
-      score: 0.609039797926979,
+      score: 0.9409652597763959,
       keypoints: [
         {
-          score: 0.9988994598388672,
+          score: 0.9999185800552368,
           part: 'nose',
-          position: { x: 269.22895899635347, y: 125.8142920551597 },
+          position: { x: 207.7155458583906, y: 79.21301103287634 },
         },
         {
-          score: 0.9999165534973145,
+          score: 0.9925481677055359,
           part: 'leftEye',
-          position: { x: 287.11140738213106, y: 94.9544927134588 },
+          position: { x: 215.70907662165305, y: 73.3509400364026 },
         },
         {
-          score: 0.9998458623886108,
+          score: 0.9999240636825562,
           part: 'rightEye',
-          position: { x: 227.23768724959186, y: 90.78930326101845 },
+          position: { x: 197.58737727756167, y: 73.61917583302301 },
         },
         {
-          score: 0.942374587059021,
+          score: 0.8783358335494995,
           part: 'leftEar',
-          position: { x: 329.1020306427655, y: 123.72407010649893 },
+          position: { x: 219.7083478660435, y: 84.39126860028576 },
         },
         {
-          score: 0.9569503664970398,
+          score: 0.9373297095298767,
           part: 'rightEar',
-          position: { x: 191.9429920578977, y: 116.4578516418368 },
+          position: { x: 173.32267743998466, y: 77.96418400033438 },
         },
         {
-          score: 0.6634409427642822,
+          score: 0.9889324903488159,
           part: 'leftShoulder',
-          position: { x: 331.86793646830995, y: 261.8487254747621 },
+          position: { x: 224.60027878664812, y: 102.78382178874331 },
         },
         {
-          score: 0.9035882353782654,
+          score: 0.9449844360351562,
           part: 'rightShoulder',
-          position: { x: 127.73411563317136, y: 246.11425451731404 },
+          position: { x: 155.15763606357203, y: 109.86909075191512 },
         },
         {
-          score: 0.9275650382041931,
+          score: 0.9764326810836792,
           part: 'leftElbow',
-          position: { x: 365.3398518506655, y: 428.28396723891973 },
+          position: { x: 271.08353222668865, y: 90.28854002006324 },
         },
         {
-          score: 0.9611034393310547,
+          score: 0.9834730625152588,
           part: 'rightElbow',
-          position: { x: 137.96159974517525, y: 496.9929471405564 },
+          position: { x: 116.77308604689424, y: 96.10834099439332 },
         },
         {
-          score: 0.8923328518867493,
+          score: 0.7045027017593384,
           part: 'leftWrist',
-          position: { x: 372.19717699822746, y: 328.4008351633985 },
+          position: { x: 284.01391800090033, y: 40.85296393368495 },
         },
         {
-          score: 0.8667539954185486,
+          score: 0.7544713020324707,
           part: 'rightWrist',
-          position: { x: 286.60021964678043, y: 335.7995206465517 },
+          position: { x: 124.80642374462886, y: 47.96590900792222 },
         },
         {
-          score: 0.18988096714019775,
+          score: 0.9926081895828247,
           part: 'leftHip',
-          position: { x: 315.226239308309, y: 543.4245567024914 },
+          position: { x: 217.17482453932558, y: 210.32231727926649 },
         },
         {
-          score: 0.02712242864072323,
+          score: 0.996791422367096,
           part: 'rightHip',
-          position: { x: 196.04915237797837, y: 540.7767087847342 },
+          position: { x: 178.44819996885752, y: 209.48431194617126 },
         },
         {
-          score: 0.010286564938724041,
+          score: 0.9917946457862854,
           part: 'leftKnee',
-          position: { x: 307.65759989445314, y: 518.883897559652 },
+          position: { x: 209.59956177292167, y: 300.0313103226836 },
         },
         {
-          score: 0.0028752353973686695,
+          score: 0.9884691834449768,
           part: 'rightKnee',
-          position: { x: 263.0752716955044, y: 535.4873082795496 },
+          position: { x: 161.40224177364246, y: 290.8316612392084 },
         },
         {
-          score: 0.007510093972086906,
+          score: 0.9464741349220276,
           part: 'leftAnkle',
-          position: { x: 314.45532356904175, y: 522.4464724889525 },
+          position: { x: 204.2514684673413, y: 364.3322956960953 },
         },
         {
-          score: 0.0032299424055963755,
+          score: 0.9194188117980957,
           part: 'rightAnkle',
-          position: { x: 290.5325438642316, y: 520.6055090714985 },
+          position: { x: 138.07288735571538, y: 358.8484967079608 },
         },
       ],
     },
@@ -205,22 +176,7 @@ async function testImageAndEstimatePoses() {
 
   // Draw poses.
   drawDetectionResults();
-
-  toggleLoadingUI(false);
-  document.getElementById('results').style.display = 'block';
 }
-
-let guiState = {
-  // Selected image
-  sourceImage: Object.keys(sourceImages)[0],
-  avatarSVG: Object.keys(avatarSvgs)[2],
-  // Detection debug
-  showKeypoints: true,
-  showSkeleton: true,
-  // Illustration debug
-  showCurves: false,
-  showLabels: false,
-};
 
 /**
  * Kicks off the demo by loading the posenet model and estimating
@@ -233,8 +189,7 @@ export async function bindPage() {
   canvas.height = CANVAS_HEIGHT;
   canvasScope.setup(canvas);
 
-  setStatusText('Loading SVG file...');
-  await loadSVG(Object.values(avatarSvgs)[2]);
+  await loadSVG(Object.values(avatarSvgs)[0]);
 }
 
 window.onload = bindPage;
