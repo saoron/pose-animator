@@ -15,23 +15,18 @@
  * =============================================================================
  */
 
-import * as posenet_module from '@tensorflow-models/posenet';
-import * as facemesh_module from '@tensorflow-models/facemesh';
-import * as tf from '@tensorflow/tfjs';
 import * as paper from 'paper';
-import "babel-polyfill";
+import 'babel-polyfill';
 
-import dat from 'dat.gui';
-import {SVGUtils} from './utils/svgUtils'
-import {PoseIllustration} from './illustrationGen/illustration';
-import {Skeleton, facePartName2Index} from './illustrationGen/skeleton';
-import {toggleLoadingUI, setStatusText} from './utils/demoUtils';
+import { SVGUtils } from './utils/svgUtils';
+import { PoseIllustration } from './illustrationGen/illustration';
+import { Skeleton } from './illustrationGen/skeleton';
+import { toggleLoadingUI, setStatusText } from './utils/demoUtils';
 
 import * as boySVG from './resources/illustration/boy.svg';
 import * as girlSVG from './resources/illustration/girl.svg';
-import * as abstractSVG from './resources/illustration/abstract.svg';
-import * as blathersSVG from './resources/illustration/blathers.svg';
-import * as tomNookSVG from './resources/illustration/tom-nook.svg';
+import * as girlSH from './resources/illustration/girlSH.svg';
+
 import * as boy_doughnut from './resources/images/boy_doughnut.jpg';
 import * as tie_with_beer from './resources/images/tie_with_beer.jpg';
 import * as test_img from './resources/images/test.png';
@@ -39,86 +34,32 @@ import * as full_body from './resources/images/full-body.png';
 import * as full_body_1 from './resources/images/full-body_1.png';
 import * as full_body_2 from './resources/images/full-body_2.png';
 
-// clang-format off
-import {
-  drawKeypoints,
-  drawPoint,
-  drawSkeleton,
-  renderImageToCanvas,
-} from './utils/demoUtils';
 import { FileUtils } from './utils/fileUtils';
 
 // clang-format on
-const resnetArchitectureName = 'MobileNetV1';
 const avatarSvgs = {
-  'girl': girlSVG.default,
-  'boy': boySVG.default,
-  'abstract': abstractSVG.default,
-  'blathers': blathersSVG.default,
-  'tom-nook': tomNookSVG.default,
+  girl: girlSVG.default,
+  boy: boySVG.default,
+  women: girlSH.default,
 };
 const sourceImages = {
-  'boy_doughnut': boy_doughnut.default,
-  'tie_with_beer': tie_with_beer.default,
-  'test_img': test_img.default,
-  'full_body': full_body.default,
-  'full_body_1': full_body_1.default,
-  'full_body_2': full_body_2.default,
+  boy_doughnut: boy_doughnut.default,
+  tie_with_beer: tie_with_beer.default,
+  test_img: test_img.default,
+  full_body: full_body.default,
+  full_body_1: full_body_1.default,
+  full_body_2: full_body_2.default,
 };
 
 let skeleton;
 let illustration;
 let canvasScope;
 
-let posenet;
-let facemesh;
-
-const VIDEO_WIDTH = 513;
-const VIDEO_HEIGHT = 513;
-
 const CANVAS_WIDTH = 513;
 const CANVAS_HEIGHT = 513;
 
-const defaultQuantBytes = 2;
-const defaultMultiplier = 1.0;
-const defaultStride = 16;
-const defaultInputResolution = 257;
-const defaultMaxDetections = 1;
-const defaultMinPartConfidence = 0.1;
-const defaultMinPoseConfidence = 0.2;
-const defaultNmsRadius = 20.0;
-
 let predictedPoses;
-let faceDetection;
 let sourceImage;
-
-/**
- * Draws a pose if it passes a minimum confidence onto a canvas.
- * Only the pose's keypoints that pass a minPartConfidence are drawn.
- */
-function drawResults(image, canvas, faceDetection, poses) {
-  renderImageToCanvas(image, [VIDEO_WIDTH, VIDEO_HEIGHT], canvas);
-  const ctx = canvas.getContext('2d');
-  poses.forEach((pose) => {
-    if (pose.score >= defaultMinPoseConfidence) {
-      if (guiState.showKeypoints) {
-        drawKeypoints(pose.keypoints, defaultMinPartConfidence, ctx);
-      }
-
-      if (guiState.showSkeleton) {
-        drawSkeleton(pose.keypoints, defaultMinPartConfidence, ctx);
-      }
-    }
-  });
-  if (guiState.showKeypoints) {
-    faceDetection.forEach(face => {
-      Object.values(facePartName2Index).forEach(index => {
-          let p = face.scaledMesh[index];
-          drawPoint(ctx, p[1], p[0], 3, 'red');
-      });
-    });
-  }
-}
 
 async function loadImage(imagePath) {
   const image = new Image();
@@ -126,15 +67,11 @@ async function loadImage(imagePath) {
     image.crossOrigin = '';
     image.onload = () => {
       resolve(image);
-    }
+    };
   });
 
   image.src = imagePath;
   return promise;
-}
-
-function multiPersonCanvas() {
-  return document.querySelector('#multi canvas');
 }
 
 function getIllustrationCanvas() {
@@ -145,29 +82,14 @@ function getIllustrationCanvas() {
  * Draw the results from the multi-pose estimation on to a canvas
  */
 function drawDetectionResults() {
-  const canvas = multiPersonCanvas();
-  drawResults(sourceImage, canvas, faceDetection, predictedPoses);
   if (!predictedPoses || !predictedPoses.length || !illustration) {
     return;
   }
-
   skeleton.reset();
   canvasScope.project.clear();
 
-  if (faceDetection && faceDetection.length > 0) {
-    let face = Skeleton.toFaceFrame(faceDetection[0]);
-    illustration.updateSkeleton(predictedPoses[0], face);
-  } else {
-    illustration.updateSkeleton(predictedPoses[0], null);
-  }
+  illustration.updateSkeleton(predictedPoses[0], null);
   illustration.draw(canvasScope, sourceImage.width, sourceImage.height);
-
-  if (guiState.showCurves) {
-    illustration.debugDraw(canvasScope);
-  }
-  if (guiState.showLabels) {
-    illustration.debugDrawLabel(canvasScope);
-  }
 }
 
 /**
@@ -180,7 +102,7 @@ async function testImageAndEstimatePoses() {
   document.getElementById('results').style.display = 'none';
 
   // Reload facemesh model to purge states from previous runs.
-  facemesh = await facemesh_module.load();
+  //facemesh = await facemesh_module.load();
 
   // Load an example image
   setStatusText('Loading image...');
@@ -188,14 +110,98 @@ async function testImageAndEstimatePoses() {
 
   // Estimates poses
   setStatusText('Predicting...');
-  predictedPoses = await posenet.estimatePoses(sourceImage, {
-    flipHorizontal: false,
-    decodingMethod: 'multi-person',
-    maxDetections: defaultMaxDetections,
-    scoreThreshold: defaultMinPartConfidence,
-    nmsRadius: defaultNmsRadius,
-  });
-  faceDetection = await facemesh.estimateFaces(sourceImage, false, false);
+  predictedPoses = [
+    {
+      score: 0.609039797926979,
+      keypoints: [
+        {
+          score: 0.9988994598388672,
+          part: 'nose',
+          position: { x: 269.22895899635347, y: 125.8142920551597 },
+        },
+        {
+          score: 0.9999165534973145,
+          part: 'leftEye',
+          position: { x: 287.11140738213106, y: 94.9544927134588 },
+        },
+        {
+          score: 0.9998458623886108,
+          part: 'rightEye',
+          position: { x: 227.23768724959186, y: 90.78930326101845 },
+        },
+        {
+          score: 0.942374587059021,
+          part: 'leftEar',
+          position: { x: 329.1020306427655, y: 123.72407010649893 },
+        },
+        {
+          score: 0.9569503664970398,
+          part: 'rightEar',
+          position: { x: 191.9429920578977, y: 116.4578516418368 },
+        },
+        {
+          score: 0.6634409427642822,
+          part: 'leftShoulder',
+          position: { x: 331.86793646830995, y: 261.8487254747621 },
+        },
+        {
+          score: 0.9035882353782654,
+          part: 'rightShoulder',
+          position: { x: 127.73411563317136, y: 246.11425451731404 },
+        },
+        {
+          score: 0.9275650382041931,
+          part: 'leftElbow',
+          position: { x: 365.3398518506655, y: 428.28396723891973 },
+        },
+        {
+          score: 0.9611034393310547,
+          part: 'rightElbow',
+          position: { x: 137.96159974517525, y: 496.9929471405564 },
+        },
+        {
+          score: 0.8923328518867493,
+          part: 'leftWrist',
+          position: { x: 372.19717699822746, y: 328.4008351633985 },
+        },
+        {
+          score: 0.8667539954185486,
+          part: 'rightWrist',
+          position: { x: 286.60021964678043, y: 335.7995206465517 },
+        },
+        {
+          score: 0.18988096714019775,
+          part: 'leftHip',
+          position: { x: 315.226239308309, y: 543.4245567024914 },
+        },
+        {
+          score: 0.02712242864072323,
+          part: 'rightHip',
+          position: { x: 196.04915237797837, y: 540.7767087847342 },
+        },
+        {
+          score: 0.010286564938724041,
+          part: 'leftKnee',
+          position: { x: 307.65759989445314, y: 518.883897559652 },
+        },
+        {
+          score: 0.0028752353973686695,
+          part: 'rightKnee',
+          position: { x: 263.0752716955044, y: 535.4873082795496 },
+        },
+        {
+          score: 0.007510093972086906,
+          part: 'leftAnkle',
+          position: { x: 314.45532356904175, y: 522.4464724889525 },
+        },
+        {
+          score: 0.0032299424055963755,
+          part: 'rightAnkle',
+          position: { x: 290.5325438642316, y: 520.6055090714985 },
+        },
+      ],
+    },
+  ];
 
   // Draw poses.
   drawDetectionResults();
@@ -207,7 +213,7 @@ async function testImageAndEstimatePoses() {
 let guiState = {
   // Selected image
   sourceImage: Object.keys(sourceImages)[0],
-  avatarSVG: Object.keys(avatarSvgs)[0],
+  avatarSVG: Object.keys(avatarSvgs)[2],
   // Detection debug
   showKeypoints: true,
   showSkeleton: true,
@@ -216,51 +222,22 @@ let guiState = {
   showLabels: false,
 };
 
-function setupGui() {
-  const gui = new dat.GUI();
-  
-  const imageControls = gui.addFolder('Image');
-  imageControls.open();
-  gui.add(guiState, 'sourceImage', Object.keys(sourceImages)).onChange(() => testImageAndEstimatePoses());
-  gui.add(guiState, 'avatarSVG', Object.keys(avatarSvgs)).onChange(() => loadSVG(avatarSvgs[guiState.avatarSVG]));
-  
-  const debugControls = gui.addFolder('Debug controls');
-  debugControls.open();
-  gui.add(guiState, 'showKeypoints').onChange(drawDetectionResults);
-  gui.add(guiState, 'showSkeleton').onChange(drawDetectionResults);
-  gui.add(guiState, 'showCurves').onChange(drawDetectionResults);
-  gui.add(guiState, 'showLabels').onChange(drawDetectionResults);
-}
-
 /**
  * Kicks off the demo by loading the posenet model and estimating
  * poses on a default image
  */
 export async function bindPage() {
-  toggleLoadingUI(true);
   canvasScope = paper.default;
   let canvas = getIllustrationCanvas();
   canvas.width = CANVAS_WIDTH;
   canvas.height = CANVAS_HEIGHT;
   canvasScope.setup(canvas);
 
-  await tf.setBackend('webgl');
-  setStatusText('Loading PoseNet model...');
-  posenet = await posenet_module.load({
-    architecture: resnetArchitectureName,
-    outputStride: defaultStride,
-    inputResolution: defaultInputResolution,
-    multiplier: defaultMultiplier,
-    quantBytes: defaultQuantBytes
-  });
-
-  setupGui(posenet);
   setStatusText('Loading SVG file...');
-  await loadSVG(Object.values(avatarSvgs)[0]);
+  await loadSVG(Object.values(avatarSvgs)[2]);
 }
 
 window.onload = bindPage;
-FileUtils.setDragDropHandler(loadSVG);
 
 // Target is SVG string or path
 async function loadSVG(target) {
